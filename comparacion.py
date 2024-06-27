@@ -45,22 +45,39 @@ def comparar_frecuencias(audio_ref, fs_ref, audio_comp, fs_comp, tolerancia=3.0)
         return False
 
 # Archivos de audio a comparar
-archivos_audio = ['filteredAudio1.wav', 'filteredAudio2.wav', 'filteredAudio3.wav']
-audio_referencia = '8.wav'  # Audio de referencia para comparación
-tolerancia = 5.0  # Tolerancia para la comparación de frecuencias (±3 Hz)
+def comparacion():
+    archivos_audio = ['filteredAudio1.wav', 'filteredAudio2.wav', 'filteredAudio3.wav']
+    audio_referencia = '8.wav'  # Audio de referencia para comparación
+    tolerancia = 5.0  # Tolerancia para la comparación de frecuencias (±3 Hz)
+    resultado = " "
 
-# Cargar audio de referencia
-audio_ref, fs_ref = sf.read(audio_referencia)
+    # Cargar audio de referencia
+    audio_ref, fs_ref = sf.read(audio_referencia)
 
-# Comparar cada archivo con el audio de referencia y mostrar resultados
-for archivo in archivos_audio:
-    audio_comp, fs_comp = sf.read(archivo)
-    
-    if comparar_frecuencias(audio_ref, fs_ref, audio_comp, fs_comp, tolerancia):
-        print(f"El archivo {archivo} tiene una frecuencia dominante similar dentro de la tolerancia de ±{tolerancia} Hz.")
+    # Comparar cada archivo con el audio de referencia y mostrar resultados
+    for archivo in archivos_audio:
+        audio_comp, fs_comp = sf.read(archivo)
+        
+        if comparar_frecuencias(audio_ref, fs_ref, audio_comp, fs_comp, tolerancia):
+            # print(f"El archivo {archivo} tiene una frecuencia dominante similar dentro de la tolerancia de ±{tolerancia} Hz.")
+            resultado = archivo
+        else:
+            # print(f"El archivo {archivo} no tiene una frecuencia dominante similar dentro de la tolerancia de ±{tolerancia} Hz.")
+            pass
+       
+        # Reproducir el audio comparado
+        # print(f"Reproduciendo Archivo de audio: {archivo}")
+        # reproducir_audio(archivo)
+
+    if resultado == 'filteredAudio1.wav':
+        audio = "Audio1"
+        return audio
+    elif resultado == 'filteredAudio2.wav':
+        audio = "Audio2"
+        return audio
+    elif resultado == 'filteredAudio3.wav':
+        audio = "Audio3"
+        return audio
     else:
-        print(f"El archivo {archivo} no tiene una frecuencia dominante similar dentro de la tolerancia de ±{tolerancia} Hz.")
-    
-    # Reproducir el audio comparado
-    print(f"Reproduciendo Archivo de audio: {archivo}")
-    reproducir_audio(archivo)
+        audio = "Audio no identificado"
+        return audio

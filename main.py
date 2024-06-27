@@ -1,13 +1,20 @@
 from color_detector import detect_color_in_photo
 from gpiozero.pins.pigpio import PiGPIOFactory
 from picamera2 import Picamera2, Preview
+from comparacion import comparacion
 from gpiozero import AngularServo
 from colorama import Fore
+from iir import grabacion
 import RPi.GPIO as GPIO
 from time import sleep
 import numpy as np
 import pygame
 import cv2
+
+try:
+    GPIO.cleanup()
+except:
+    pass
 
 #Use before run this script the next command in shell "sudo pigpiod"
 factory = PiGPIOFactory()
@@ -38,36 +45,36 @@ angulo5 = 0
 angulo6 = 0
 
 #Angles to box position 1
-a1 = 0
-a2 = 0
-a3 = 0
-a4 = 0
-a5 = 0
-a6 = 0
+a1 = 10
+a2 = 10
+a3 = 10
+a4 = 10
+a5 = 10
+a6 = 10
 
 #Angles to box position 2
-b1 = 0
-b2 = 0
-b3 = 0
-b4 = 0
-b5 = 0
-b6 = 0
+b1 = 20
+b2 = 20
+b3 = 20
+b4 = 20
+b5 = 20
+b6 = 20
 
 #Angles to box position 3
-c1 = 0
-c2 = 0
-c3 = 0
-c4 = 0
-c5 = 0
-c6 = 0
+c1 = 30
+c2 = 30
+c3 = 30
+c4 = 30
+c5 = 30
+c6 = 30
 
 #Angles to take position - where the element stand by
-z1 = 0
-z2 = 0
-z3 = 0
-z4 = 0
-z5 = 0
-z6 = 0
+z1 = 80
+z2 = 80
+z3 = 80
+z4 = 80
+z5 = 80
+z6 = 80
 
 #Ranges of colors to use in camera
 color_ranges = {
@@ -101,13 +108,15 @@ def turn_off_leds():
     GPIO.output(pin_azul, GPIO. HIGH)  
 
 #Function to move all servos to initial position
-def home():
-    Ctrl_servo1(angulo1, 0)
-    Ctrl_servo2(angulo2, 0)
-    Ctrl_servo3(angulo3, 0)
-    Ctrl_servo4(angulo4, 0)
-    Ctrl_servo5(angulo5, 0)
-    Ctrl_servo6(angulo6, 0)
+def home(anguloa, angulob, anguloc, angulod, anguloe, angulof):
+    angulo1 = Ctrl_servo1(anguloa, 0)
+    angulo2 = Ctrl_servo2(angulob, 0)
+    angulo3 = Ctrl_servo3(anguloc, 0)
+    angulo4 = Ctrl_servo4(angulod, 0)
+    angulo5 = Ctrl_servo5(anguloe, 0)
+    angulo6 = Ctrl_servo6(angulof, 0)
+    print(Fore.GREEN + "Robot posicionado en home" + Fore.WHITE)
+    return angulo1, angulo2, angulo3, angulo4, angulo5, angulo6
 
 #Function to move all servos to max position
 def max():
@@ -135,6 +144,8 @@ def set_pose(theta1, theta2, theta3, theta4, theta5, theta6, angulo1, angulo2, a
     angulo4 = Ctrl_servo4(angulo4, theta4)
     angulo5 = Ctrl_servo5(angulo5, theta5)
     angulo6 = Ctrl_servo6(angulo6, theta6)
+    Ver_pose(angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
+    return angulo1, angulo2, angulo3, angulo4, angulo5, angulo6
 
 #Function to test positions of all servos
 def test():
@@ -143,7 +154,7 @@ def test():
     sleep(3)
 
     print("posicionando en home")
-    home()
+    home(angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
     sleep(3)
     
     print("posicionando en maximo")
@@ -153,6 +164,7 @@ def test():
 #Functions to control the move of every servo, save return the final position to use in anguloi
 #To control the speed change the value of step_time
 def Ctrl_servo1(posicion, angulo):
+    # print("Moviendo Servo1")
     while True:
         if abs(angulo) <= 90:
             if angulo < posicion:
@@ -170,6 +182,7 @@ def Ctrl_servo1(posicion, angulo):
             return(posicion)
 
 def Ctrl_servo2(posicion, angulo):
+    # print("Moviendo Servo2")
     while True:
         if abs(angulo) <= 90:
             if angulo < posicion:
@@ -187,6 +200,7 @@ def Ctrl_servo2(posicion, angulo):
             return(posicion)
 
 def Ctrl_servo3(posicion, angulo):
+    # print("Moviendo Servo3")
     while True:
         if abs(angulo) <= 90:
             if angulo < posicion:
@@ -204,6 +218,7 @@ def Ctrl_servo3(posicion, angulo):
             return(posicion)
 
 def Ctrl_servo4(posicion, angulo):
+    # print("Moviendo Servo4")
     while True:
         if abs(angulo) <= 90:
             if angulo < posicion:
@@ -221,6 +236,7 @@ def Ctrl_servo4(posicion, angulo):
             return(posicion)
         
 def Ctrl_servo5(posicion, angulo):
+    # print("Moviendo Servo5")
     while True:
         if abs(angulo) <= 90:
             if angulo < posicion:
@@ -238,6 +254,7 @@ def Ctrl_servo5(posicion, angulo):
             return(posicion)
         
 def Ctrl_servo6(posicion, angulo):
+    # print("Moviendo Servo6")
     while True:
         if abs(angulo) <= 90:
             if angulo < posicion:
@@ -253,6 +270,14 @@ def Ctrl_servo6(posicion, angulo):
         else:
             print(Fore.RED + "El angulo para este servo uno solo puede estar entre -90 a 90")
             return(posicion)
+        
+def Ver_pose(angulo1, angulo2, angulo3, angulo4, angulo5, angulo6):
+    print("Angulo 1: " + Fore.GREEN + str(angulo1) + Fore.WHITE +"°")
+    print("Angulo 2: " + Fore.GREEN + str(angulo2) + Fore.WHITE +"°")
+    print("Angulo 3: " + Fore.GREEN + str(angulo3) + Fore.WHITE +"°")
+    print("Angulo 4: " + Fore.GREEN + str(angulo4) + Fore.WHITE +"°")
+    print("Angulo 5: " + Fore.GREEN + str(angulo5) + Fore.WHITE +"°")
+    print("Angulo 6: " + Fore.GREEN + str(angulo6) + Fore.WHITE +"°")
 
 #Set configuration of joystick
 def Joystick_init():
@@ -363,10 +388,14 @@ turn_off_leds()
 
 while True:
     print(Fore.YELLOW+"-----------------------------------------------------------------------------")
-    opcion = int(input(Fore.WHITE +"Selecciona la accion a realizar: "+
-                       "\n0. Informacion \n1. Automatico-Camara \n2. Audio \n3. Teclado \n4. Joystick \n5. Salir \n"+
-                       "Numero de accion: " + Fore.GREEN))
-    print(Fore.WHITE+"\n")
+    try:
+        opcion = int(input(Fore.WHITE +"Selecciona la accion a realizar: "+
+                        "\n0. Informacion \n1. Automatico-Camara \n2. Audio \n3. Teclado \n4. Joystick \n5. Salir \n9. Ver pose \n"+
+                        Fore.MAGENTA + "12. TEST \n"+  Fore.WHITE +   #Una vez ya no se hagan pruebas eliminar esta linea
+                        "Numero de accion: " + Fore.GREEN))
+        print(Fore.WHITE+"\n")
+    except:
+        opcion = 99
     
     #Banner de Informacion
     if opcion == 0:
@@ -413,30 +442,61 @@ while True:
         print(result)
 
         #Take the element
-        set_pose(z1, z2, z3, z4, z5, z6, angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
+        angulo1, angulo2, angulo3, angulo4, angulo5, angulo6 = set_pose(z1, z2, z3, z4, z5, z6, angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
         
         #Move element by colorself
         if predominant_color == "Rojo":
             turn_on_led(pin_rojo)
             turn_off_led(pin_verde)
             turn_off_led(pin_azul)
-            set_pose(a1, a2, a3, a4, a5, a6, angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
+            angulo1, angulo2, angulo3, angulo4, angulo5, angulo6 = set_pose(a1, a2, a3, a4, a5, a6, angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
         elif predominant_color == "Verde":
             turn_off_led(pin_rojo)
             turn_on_led(pin_verde)
             turn_off_led(pin_azul)
-            set_pose(b1, b2, b3, b4, b5, b6, angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
+            angulo1, angulo2, angulo3, angulo4, angulo5, angulo6 = set_pose(b1, b2, b3, b4, b5, b6, angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
         elif predominant_color == "Amarillo":
             turn_on_led(pin_rojo)
             turn_on_led(pin_verde)
             turn_off_led(pin_azul)
-            set_pose(c1, c2, c3, c4, c5, c6, angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
+            angulo1, angulo2, angulo3, angulo4, angulo5, angulo6 = set_pose(c1, c2, c3, c4, c5, c6, angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
         else:
             turn_off_leds()
 
+        angulo1, angulo2, angulo3, angulo4, angulo5, angulo6 = home(angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
+
     #Programacion Audio
     elif opcion == 2:
-        pass
+        grabacion()
+        audio = comparacion()
+        Ver_pose(angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
+        
+        if audio == "Audio1":
+            color_selected = "Rojo"
+            print(Fore.GREEN + "Color seleccionado: " + color_selected + Fore.WHITE)
+            #Take the element
+            angulo1, angulo2, angulo3, angulo4, angulo5, angulo6 = set_pose(z1, z2, z3, z4, z5, z6, angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
+            #Move to position Rojo
+            angulo1, angulo2, angulo3, angulo4, angulo5, angulo6 = set_pose(a1, a2, a3, a4, a5, a6, angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
+        elif audio == "Audio2":
+            color_selected = "Verde"
+            print(Fore.GREEN + "Color seleccionado: " + color_selected + Fore.WHITE)
+            #Take the element
+            angulo1, angulo2, angulo3, angulo4, angulo5, angulo6 = set_pose(z1, z2, z3, z4, z5, z6, angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
+            #Move to position Verde
+            angulo1, angulo2, angulo3, angulo4, angulo5, angulo6 = set_pose(b1, b2, b3, b4, b5, b6, angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
+        elif audio == "Audio3":
+            color_selected = "Amarillo"
+            print(Fore.GREEN + "Color seleccionado: " + color_selected + Fore.WHITE)
+            #Take the element
+            angulo1, angulo2, angulo3, angulo4, angulo5, angulo6 = set_pose(z1, z2, z3, z4, z5, z6, angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
+            #Move to position Amarillo
+            angulo1, angulo2, angulo3, angulo4, angulo5, angulo6 = set_pose(c1, c2, c3, c4, c5, c6, angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
+        else:
+            color_selected = "Color no valido"
+            print(Fore.RED + "Color seleccionado: " + color_selected + Fore.WHITE)
+
+        angulo1, angulo2, angulo3, angulo4, angulo5, angulo6 = home(angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
 
     #Programación Control manual con teclado
     elif opcion == 3:
@@ -450,22 +510,16 @@ while True:
                 angulo = int(input(Fore.WHITE + "Posición: "))
 
             if servo == 1:
-                print("Moviendo Servo1")
                 angulo1 = Ctrl_servo1(angulo1, angulo)
             elif servo == 2:
-                print("Moviendo Servo2")
                 angulo2 = Ctrl_servo2(angulo2, angulo)
             elif servo == 3:
-                print("Moviendo Servo3")
                 angulo3 = Ctrl_servo3(angulo3, angulo)
             elif servo == 4:
-                print("Moviendo Servo4")
                 angulo4 = Ctrl_servo4(angulo4, angulo)
             elif servo == 5:
-                print("Moviendo Servo5")
                 angulo5 = Ctrl_servo5(angulo5, angulo)
             elif servo == 6:
-                print("Moviendo Servo6")
                 angulo6 = Ctrl_servo6(angulo6, angulo)
             elif servo == 9:
                 break    
@@ -484,28 +538,28 @@ while True:
                 pygame.event.pump()
 
                 # Loop through all axes and print value if it changes
-                for i in range(joystick.get_numaxes()):
-                    axis_value = joystick.get_axis(i)
-                    if abs(axis_value) > 0.01:
-                        if i != 5:
-                            if i!= 2:
-                                counter_increment = axis_value
-                                axis_counters[i] = update_counter(axis_counters[i], counter_increment, joystick_speed)
-                                print(f"Axis {i} value: {axis_value}, Counter: {axis_counters[i]}")
+                # for i in range(joystick.get_numaxes()):
+                #     axis_value = joystick.get_axis(i)
+                #     if abs(axis_value) > 0.01:
+                #         if i != 5:
+                #             if i!= 2:
+                #                 counter_increment = axis_value
+                #                 axis_counters[i] = update_counter(axis_counters[i], counter_increment, joystick_speed)
+                #                 print(f"Axis {i} value: {axis_value}, Counter: {axis_counters[i]}")
                                 
-                                if axis_counters[0] > 10:
-                                    axis_counters[0] = 10
+                #                 if axis_counters[0] > 10:
+                #                     axis_counters[0] = 10
                                     
-                                # elif axis_counters[0] < 10:
-                                #     axis_counters[0] = -10
+                #                 # elif axis_counters[0] < 10:
+                #                 #     axis_counters[0] = -10
 
-                                # else:
-                                #     pass
+                #                 # else:
+                #                 #     pass
 
-                                angulo1 = Ctrl_servo1(angulo1, axis_counters[0])
-                                print(angulo1)
-                                # angulo5 = Ctrl_servo2(angulo2, axis_counters[4])
-                        previous_axis_values[i] = axis_value
+                #                 angulo1 = Ctrl_servo1(angulo1, axis_counters[0])
+                #                 print(angulo1)
+                #                 # angulo5 = Ctrl_servo2(angulo2, axis_counters[4])
+                #         previous_axis_values[i] = axis_value
                     
 
                 # Loop through all buttons and print value if it changes
@@ -517,7 +571,7 @@ while True:
 
                         if i== 4 and button_state == 1 and servo_selected > 1:
                             servo_selected -= 1 
-                            print(Fore.GREEN + "Servo seleccionado: " + str(servo_selected))
+                            print(Fore.GREEN + "Servo seleccionado: " + str(servo_selected) + Fore.WHITE)
                             if servo_selected == 1:
                                 hat_counters[0] = angulo1
                             elif servo_selected == 2:
@@ -533,7 +587,7 @@ while True:
 
                         elif i== 5 and button_state == 1 and servo_selected < 6 :
                             servo_selected += 1 
-                            print(Fore.GREEN + "Servo seleccionado: " + str(servo_selected))
+                            print(Fore.GREEN + "Servo seleccionado: " + str(servo_selected) + Fore.WHITE)
                             if servo_selected == 1:
                                 hat_counters[0] = angulo1
                             elif servo_selected == 2:
@@ -548,7 +602,7 @@ while True:
                                 hat_counters[0] = angulo6
 
                         elif i == 6 and button_state == 1:
-                            home()
+                            home(angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
 
                         elif i == 7 and button_state == 1:
                             Use_joystick = False
@@ -560,7 +614,7 @@ while True:
                         if hat_state[0] != 0:  # Horizontal direction
                             # joystick_speed = update_counter(speed_counters[i], 1, 1)
                             joystick_speed += hat_state[0]
-                            print("La velocidad actual es de: " + str(joystick_speed))
+                            print(Fore.WHITE + "La velocidad actual es de: " + Fore.GREEN + str(joystick_speed) + Fore.WHITE)
                         # print(f"Hat {i} value: {hat_state}")
                     if hat_state != (0, 0):  # If hat is not centered
                         if hat_state[1] != 0:  # Vertical direction
@@ -581,7 +635,7 @@ while True:
                         angulo1 = Ctrl_servo1(angulo1, -10)
 
 
-                    if servo_selected == 2 and abs(hat_counters[i]) < 46:
+                    elif servo_selected == 2 and abs(hat_counters[i]) < 46:
                         # print("Moviendo Servo2")
                         angulo2 = Ctrl_servo2(angulo2, hat_counters[i])
                     elif servo_selected == 2 and hat_counters[i] > 45:
@@ -615,7 +669,11 @@ while True:
             # Clean up
             pygame.quit()
 
-    #Secuencia programada de poses
+    #Ver pose de robot
+    elif opcion == 9:
+        Ver_pose(angulo1, angulo2, angulo3, angulo4, angulo5, angulo6)
+
+    #PARA TESTS
     elif opcion == 12:        
         angulo4 = Ctrl_servo4(angulo4, -30)
         angulo1 = Ctrl_servo1(angulo1, 5)
