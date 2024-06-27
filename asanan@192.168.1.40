@@ -1,0 +1,72 @@
+from gpiozero import Servo
+from time import sleep
+from gpiozero.pins.pigpio import PiGPIOFactory
+
+factory = PiGPIOFactory()
+servo1 = Servo(12, pin_factory=factory)
+servo2 = Servo(13, pin_factory=factory)
+servo3 = Servo(14, pin_factory=factory)
+servo4 = Servo(15, pin_factory=factory)
+
+angulo1 = 90
+angulo2 = 90
+angulo3 = 90
+angulo4 = 90
+
+def home():
+    servo1.mid()
+    servo2.mid()
+    servo3.mid()
+    servo4.mid()
+
+def Ctrl_servo1(posicion, angulo):
+    while True:
+        if posicion > angulo:
+            posicion += 0.1
+            servo1.value(posicion)
+            sleep(0.05)
+        elif posicion < angulo:
+            posicion -= 0.1
+            servo1.value(posicion)
+            sleep(0.05)
+        elif posicion == angulo:
+            print("Servo 1 en posicion")
+            break
+
+
+    servo1.value(angulo)
+    sleep(1)
+
+def Ctrl_servo2(angulo):
+    servo2.value(angulo)
+    sleep(1)
+
+def Ctrl_servo3(angulo):
+    servo3.value(angulo)
+    sleep(1)
+
+def Ctrl_servo4(angulo):
+    servo4.value(angulo)
+    sleep(1)
+
+while True:
+    
+    servo = int(input("Numero de servomotor: "))
+    angulo = int(input("Posición: "))
+
+    if servo == 1:
+        print("Moviendo Servo1")
+        Ctrl_servo1(angulo1, angulo)
+    else:
+        print("El servo seleccionado no existe")
+        # print("Servo in the middle")
+        # servo1.mid()
+        # sleep(5)
+
+        # print("Servo in the min")
+        # servo1.min()
+        # sleep(5)
+
+        # print("Servo in the max")
+        # servo2.max()
+        # sleep(5)
